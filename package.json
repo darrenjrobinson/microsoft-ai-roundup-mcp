@@ -1,0 +1,48 @@
+{
+  "name": "microsoft-ai-roundup-mcp",
+  "version": "0.1.0",
+  "mcpName": "io.github.darrenjrobinson/microsoft-ai-roundup",
+  "description": "MCP server for searching Merill's Weekly Microsoft AI Roundup (msai.ms) archive — curated weekly Microsoft AI news",
+  "main": "dist/src/index.js",
+  "bin": {
+    "microsoft-ai-roundup-mcp": "dist/src/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/src/index.js",
+    "dev": "ts-node src/index.ts",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "mcp",
+    "microsoft",
+    "ai",
+    "copilot",
+    "azure-ai",
+    "github",
+    "claude",
+    "newsletter"
+  ],
+  "author": {
+    "name": "Darren Robinson",
+    "url": "https://www.npmjs.com/~darrenjrobinson"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darrenjrobinson/MicrosoftAIRoundupMCPServer"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "rimraf": "^5.0.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
