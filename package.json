@@ -30,7 +30,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/darrenjrobinson/MicrosoftAIRoundupMCPServer"
+    "url": "https://github.com/darrenjrobinson/microsoft-ai-roundup-mcp"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.10.1",

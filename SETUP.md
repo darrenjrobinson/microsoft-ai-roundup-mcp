@@ -2,11 +2,13 @@
 
 Steps only the repo owner can do. Work top to bottom; everything here is one-time — after this the Tuesday cron and `v*` tag autopublish handle the rest. (This file is git-tracked but excluded from the npm package.)
 
-## 1. Create the GitHub repo and push
+## 1. Push to the GitHub repo
+
+Repo: https://github.com/darrenjrobinson/microsoft-ai-roundup-mcp (already created)
 
 ```powershell
-gh auth login   # if needed
-gh repo create darrenjrobinson/MicrosoftAIRoundupMCPServer --public --source . --push
+git remote add origin https://github.com/darrenjrobinson/microsoft-ai-roundup-mcp.git
+git push -u origin main
 ```
 
 The repo name is load-bearing: it's hardcoded in `src/db/client.ts` (`GITHUB_REPO`) as the DB download URL.
@@ -14,7 +16,7 @@ The repo name is load-bearing: it's hardcoded in `src/db/client.ts` (`GITHUB_REP
 ## 2. Add the OpenAI secret
 
 ```powershell
-gh secret set OPENAI_API_KEY --repo darrenjrobinson/MicrosoftAIRoundupMCPServer
+gh secret set OPENAI_API_KEY --repo darrenjrobinson/microsoft-ai-roundup-mcp
 ```
 
 ## 3. First database release
@@ -50,7 +52,7 @@ npmjs.com → package `microsoft-ai-roundup-mcp` → Settings → Trusted Publis
 | Field | Value |
 |---|---|
 | Organization or user | `darrenjrobinson` |
-| Repository | `MicrosoftAIRoundupMCPServer` |
+| Repository | `microsoft-ai-roundup-mcp` |
 | Workflow filename | `publish-mcp.yml` |
 | Environment | (leave blank) |
 

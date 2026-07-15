@@ -5,7 +5,7 @@ import * as os from 'os';
 import * as https from 'https';
 import * as http from 'http';
 
-const GITHUB_REPO = 'darrenjrobinson/MicrosoftAIRoundupMCPServer';
+const GITHUB_REPO = 'darrenjrobinson/microsoft-ai-roundup-mcp';
 const DB_FILENAME = 'microsoft-ai-roundup.db';
 const META_FILENAME = 'release-meta.json';
 const CACHE_DIR = path.join(os.homedir(), '.microsoft-ai-roundup-mcp');

@@ -6,7 +6,7 @@ name: Publish to npm & MCP Registry
 # Auth is tokenless (OIDC) for both targets:
 #  - npm: Trusted Publishing — one-time setup at npmjs.com → package Settings →
 #    Trusted Publisher → GitHub Actions (owner: darrenjrobinson,
-#    repo: MicrosoftAIRoundupMCPServer, workflow: publish-mcp.yml). Provenance is
+#    repo: microsoft-ai-roundup-mcp, workflow: publish-mcp.yml). Provenance is
 #    generated automatically. Note: the FIRST publish (v0.1.0) must be done
 #    manually — npm cannot create a new package via Trusted Publishing.
 #  - MCP Registry: GitHub OIDC authorises the io.github.darrenjrobinson/*

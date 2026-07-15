@@ -134,8 +134,8 @@ Delete the folder to force a fresh download of the latest database.
 ## Local Development / Ingestion
 
 ```bash
-git clone https://github.com/darrenjrobinson/MicrosoftAIRoundupMCPServer
-cd MicrosoftAIRoundupMCPServer
+git clone https://github.com/darrenjrobinson/microsoft-ai-roundup-mcp
+cd microsoft-ai-roundup-mcp
 npm install
 npm run build
 

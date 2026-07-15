@@ -3,7 +3,7 @@
   "name": "io.github.darrenjrobinson/microsoft-ai-roundup",
   "description": "Search Merill's Weekly Microsoft AI Roundup (msai.ms) archive — curated weekly Microsoft AI news",
   "repository": {
-    "url": "https://github.com/darrenjrobinson/MicrosoftAIRoundupMCPServer",
+    "url": "https://github.com/darrenjrobinson/microsoft-ai-roundup-mcp",
     "source": "github"
   },
   "version": "0.1.0",
