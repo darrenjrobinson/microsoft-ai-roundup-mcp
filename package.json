@@ -1,6 +1,6 @@
 {
   "name": "microsoft-ai-roundup-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "mcpName": "io.github.darrenjrobinson/microsoft-ai-roundup",
   "description": "MCP server for searching Merill's Weekly Microsoft AI Roundup (msai.ms) archive — curated weekly Microsoft AI news",
   "main": "dist/src/index.js",
