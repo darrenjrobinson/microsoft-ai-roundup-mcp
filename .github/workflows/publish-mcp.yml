@@ -61,7 +61,7 @@ jobs:
           echo "Publishing $TAG (version ${TAG#v})"
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.target.outputs.tag }}
 
