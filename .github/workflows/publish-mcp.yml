@@ -1,20 +1,31 @@
 name: Publish to npm & MCP Registry
 
-# Triggered by pushing a version tag (e.g. v0.1.4).
+# Triggered by pushing a version tag, or dispatched manually against an existing
+# tag to finish a release that only got half-way.
 # Weekly database releases use db-* tags and do NOT trigger this workflow.
 #
 # Auth is tokenless (OIDC) for both targets:
 #  - npm: Trusted Publishing — one-time setup at npmjs.com → package Settings →
 #    Trusted Publisher → GitHub Actions (owner: darrenjrobinson,
 #    repo: microsoft-ai-roundup-mcp, workflow: publish-mcp.yml). Provenance is
-#    generated automatically. Note: the FIRST publish (v0.1.0) must be done
-#    manually — npm cannot create a new package via Trusted Publishing.
+#    generated automatically. Note: the FIRST publish must be done manually —
+#    npm cannot create a new package via Trusted Publishing.
 #  - MCP Registry: GitHub OIDC authorises the io.github.darrenjrobinson/*
 #    namespace because this workflow runs in that owner's repo.
+#
+# Every publishing step is idempotent, so re-running is always safe: npm publish
+# is skipped when the version is already on npm, and the registry publish is
+# skipped when the registry already points at this version.
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing version tag to publish, e.g. v0.1.2. Use this to finish a release whose npm publish succeeded but whose registry publish failed."
+        required: true
+        type: string
 
 permissions:
   id-token: write # OIDC for npm trusted publishing + MCP Registry
@@ -24,11 +35,35 @@ jobs:
   publish:
     name: Publish npm package & registry entry
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
+      # Tag comes from the ref on a tag push, or from the input on a manual
+      # re-run. Both are read via env rather than ${{ }} interpolation, so a tag
+      # name can never be substituted into the shell.
+      - name: Resolve target tag
+        id: target
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="$GITHUB_REF_NAME"
+          fi
+          if ! printf '%s' "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::Expected a version tag like v1.2.3, got '$TAG'."
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "Publishing $TAG (version ${TAG#v})"
+
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.target.outputs.tag }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -48,19 +83,60 @@ jobs:
         run: npm run build
 
       - name: Verify tag matches package.json and server.json versions
+        env:
+          TAG_VERSION: ${{ steps.target.outputs.version }}
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
           PKG=$(node -p "require('./package.json').version")
           SRV=$(node -p "require('./server.json').version")
           SRV_PKG=$(node -p "require('./server.json').packages[0].version")
-          echo "tag=$TAG package.json=$PKG server.json=$SRV server.json.packages[0]=$SRV_PKG"
-          if [ "$TAG" != "$PKG" ] || [ "$TAG" != "$SRV" ] || [ "$TAG" != "$SRV_PKG" ]; then
-            echo "::error::Version mismatch — bump package.json and server.json (both version fields) to $TAG before tagging."
+          echo "tag=$TAG_VERSION package.json=$PKG server.json=$SRV server.json.packages[0]=$SRV_PKG"
+          if [ "$TAG_VERSION" != "$PKG" ] || [ "$TAG_VERSION" != "$SRV" ] || [ "$TAG_VERSION" != "$SRV_PKG" ]; then
+            echo "::error::Version mismatch — bump package.json and server.json (both version fields) to $TAG_VERSION before tagging."
             exit 1
           fi
 
+      # Idempotent: a re-run after a partial release must not fail here, because
+      # npm rejects publishing over an existing version with E403.
+      #
+      # The check reads registry.npmjs.org directly rather than using `npm view`,
+      # which is served through a cache that can report a stale version list.
       - name: Publish to npm
-        run: npm publish
+        id: npm_publish
+        env:
+          TAG_VERSION: ${{ steps.target.outputs.version }}
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          CODE=$(curl -sS -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' \
+            "https://registry.npmjs.org/$NAME/$TAG_VERSION" || echo 000)
+          if [ "$CODE" = "200" ]; then
+            echo "npm already has $NAME@$TAG_VERSION — skipping publish."
+            echo "outcome=skipped" >> "$GITHUB_OUTPUT"
+          else
+            npm publish
+            echo "outcome=published" >> "$GITHUB_OUTPUT"
+          fi
+
+      # npm warns on publish that the package "may take a few minutes to become
+      # available". mcp-publisher rejects a server whose npm version 404s, so
+      # handing off immediately is a race — it failed for v0.1.2 with ~2s between
+      # the two steps. Wait for npm to actually serve the version first.
+      - name: Wait for npm to serve the new version
+        env:
+          TAG_VERSION: ${{ steps.target.outputs.version }}
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          for i in $(seq 1 60); do
+            CODE=$(curl -sS -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' \
+              "https://registry.npmjs.org/$NAME/$TAG_VERSION" || echo 000)
+            if [ "$CODE" = "200" ]; then
+              echo "npm is serving $NAME@$TAG_VERSION (after $i attempt(s))."
+              exit 0
+            fi
+            echo "attempt $i/60: npm returned $CODE, waiting 5s…"
+            sleep 5
+          done
+          echo "::error::npm did not serve $NAME@$TAG_VERSION within 5 minutes. It may still appear shortly — re-run this workflow from the Actions tab with tag v$TAG_VERSION."
+          exit 1
 
       - name: Install mcp-publisher
         run: |
@@ -69,17 +145,39 @@ jobs:
       - name: Authenticate to MCP Registry (GitHub OIDC)
         run: ./mcp-publisher login github-oidc
 
+      # Idempotent: skip when the registry already advertises this version, so a
+      # re-run of a fully successful release is a no-op rather than an error.
       - name: Publish to MCP Registry
-        run: ./mcp-publisher publish
+        id: registry_publish
+        env:
+          TAG_VERSION: ${{ steps.target.outputs.version }}
+        run: |
+          SERVER=$(node -p "require('./server.json').name")
+          CURRENT=$(curl -sS "https://registry.modelcontextprotocol.io/v0/servers?search=$SERVER" \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);const m=j.servers.find(x=>x._meta['io.modelcontextprotocol.registry/official'].isLatest);process.stdout.write(m?m.server.version:'')}catch(e){process.stdout.write('')}})" || echo "")
+          if [ "$CURRENT" = "$TAG_VERSION" ]; then
+            echo "MCP Registry already publishes $SERVER $TAG_VERSION — skipping."
+            echo "outcome=skipped" >> "$GITHUB_OUTPUT"
+          else
+            echo "MCP Registry currently at '${CURRENT:-none}', publishing $TAG_VERSION."
+            ./mcp-publisher publish
+            echo "outcome=published" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Summary
+        if: always()
+        env:
+          TAG_VERSION: ${{ steps.target.outputs.version }}
+          NPM_OUTCOME: ${{ steps.npm_publish.outputs.outcome }}
+          REGISTRY_OUTCOME: ${{ steps.registry_publish.outputs.outcome }}
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
           {
-            echo "### Published v${TAG}"
+            echo "### Release v${TAG_VERSION}"
             echo ""
-            echo "| Target | Location |"
-            echo "|--------|----------|"
-            echo "| npm | https://www.npmjs.com/package/microsoft-ai-roundup-mcp/v/${TAG} |"
-            echo "| MCP Registry | io.github.darrenjrobinson/microsoft-ai-roundup |"
+            echo "| Target | Location | Result |"
+            echo "|--------|----------|--------|"
+            echo "| npm | https://www.npmjs.com/package/microsoft-ai-roundup-mcp/v/${TAG_VERSION} | ${NPM_OUTCOME:-not reached} |"
+            echo "| MCP Registry | io.github.darrenjrobinson/microsoft-ai-roundup | ${REGISTRY_OUTCOME:-not reached} |"
+            echo ""
+            echo "\`skipped\` means the target already had this version — the expected result when re-running."
           } >> "$GITHUB_STEP_SUMMARY"

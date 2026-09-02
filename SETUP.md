@@ -69,6 +69,18 @@ git push && git push --tags
 
 The `publish-mcp.yml` workflow verifies the tag matches all three version fields, then publishes to npm (OIDC, with provenance) and the MCP Registry (OIDC). No tokens, no secrets.
 
+### If a release half-completes
+
+npm can take a few minutes to serve a newly published version, and the MCP Registry refuses
+a server whose npm version it cannot yet see. The workflow waits for propagation before
+handing off, but if a release still stops part-way — npm published, registry not —
+**do not re-tag**. Re-run it instead:
+
+> Actions → **Publish to npm & MCP Registry** → **Run workflow** → enter the existing tag, e.g. `v0.1.2`
+
+Every publishing step is idempotent, so whatever already succeeded is skipped and only the
+missing half runs. Re-running a fully successful release is a no-op.
+
 ## 8. Verify end-to-end on a clean machine
 
 ```powershell
