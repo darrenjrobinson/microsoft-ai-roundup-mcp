@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/microsoft-ai-roundup-mcp)](https://www.npmjs.com/package/microsoft-ai-roundup-mcp)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-A Model Context Protocol (MCP) server for searching the archive of **[Merill's Weekly Microsoft AI Roundup](https://msai.ms)** — a curated weekly Substack newsletter by Merill Fernando (with Joshua Fernando) covering Microsoft AI: Copilot, GitHub, Azure AI, M365 AI integrations, and the surrounding ecosystem.
+A Model Context Protocol (MCP) server for searching the archive of **[Merill's Weekly Microsoft AI Roundup](https://msai.ms)** — a curated weekly Substack newsletter by Merill Fernando (with Joanne Hayek) covering Microsoft AI: Copilot, GitHub, Azure AI, M365 AI integrations, and the surrounding ecosystem.
 
 Ask natural-language questions like *"When did Copilot get feature X?"*, *"What did the roundup say about Build?"*, or *"Which GitHub projects has it highlighted?"* and get sourced answers with issue numbers, dates, and links.
 
@@ -159,10 +159,10 @@ MSAI_ROUNDUP_DB_PATH=./microsoft-ai-roundup.db npx microsoft-ai-roundup-mcp
 
 ## Permissions & Licensing
 
-Newsletter content is © [Merill Fernando](https://merill.net) & Joshua Fernando. This project indexes the freely available public archive via the public Substack API (all posts are free, `audience: "everyone"`) and always links back to the original issues. The code is [MIT licensed](LICENSE).
+Newsletter content is © [Merill Fernando](https://merill.net) & Joanne Hayek. This project indexes the freely available public archive via the public Substack API (all posts are free, `audience: "everyone"`) and always links back to the original issues. The code is [MIT licensed](LICENSE).
 
 ## Credits
 
-- **Newsletter:** [Merill Fernando](https://merill.net) & Joshua Fernando — [msai.ms](https://msai.ms)
+- **Newsletter:** [Merill Fernando](https://merill.net) & Joanne Hayek — [msai.ms](https://msai.ms)
 - **MCP server:** [Darren Robinson](https://blog.darrenjrobinson.com)
 - Sister project: [entra-news-mcp](https://github.com/darrenjrobinson/EntraNewsMCPServer) for [entra.news](https://entra.news)
