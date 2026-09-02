@@ -37,10 +37,21 @@ does not have to repeat it.
 
 The advisories were not applicable, but the audit surfaced real hygiene issues:
 
-1. **Transitive vulnerabilities** — 5 open advisories (2 moderate, 3 high) in the SDK's
-   dependency tree (`hono`, `@hono/node-server`, `ip-address`, `fast-uri`,
-   `brace-expansion`), none of which a stdio-only server reaches. Cleared by
-   `npm audit fix`; `npm audit` now reports 0 vulnerabilities.
+1. **Transitive vulnerabilities** — `npm audit` reported 5 vulnerable packages before this
+   change (2 moderate, 3 high). They fall into two groups, with different reasons for being
+   out of reach:
+
+   - **Four are SDK runtime transitives**, all of them HTTP-transport machinery: `hono`
+     (moderate) and `@hono/node-server` (moderate) are direct dependencies of the SDK,
+     `fast-uri` (high) arrives via `ajv`, and `ip-address` (high) via `express-rate-limit`.
+     A stdio-only server never loads the HTTP transports, so none of this code runs here.
+   - **One is development-only**: `brace-expansion` (high), reached through
+     `rimraf` → `glob` → `minimatch`. `rimraf` is a devDependency used by `npm run clean`,
+     so it is absent from a consumer install entirely — it is not an SDK dependency and the
+     stdio argument above does not apply to it.
+
+   All five were cleared by `npm audit fix`; `npm audit` now reports 0 vulnerabilities.
+
 2. **Declared floor raised.** `@modelcontextprotocol/sdk` was declared `^1.10.1`, a range
    spanning all three vulnerable ranges. `package-lock.json` is not published to npm, so
    `npx microsoft-ai-roundup-mcp` resolves the declared range, not the lockfile — the floor
