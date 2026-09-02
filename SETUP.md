@@ -60,8 +60,10 @@ npmjs.com → package `microsoft-ai-roundup-mcp` → Settings → Trusted Publis
 
 ```powershell
 # Bump the version in package.json AND server.json (both "version" fields) — one commit
-git commit -am "release: v0.1.1"
-git tag v0.1.1
+# The tag is derived from package.json so it can never drift.
+$version = node -p "require('./package.json').version"
+git commit -am "release: v$version"
+git tag "v$version"
 git push && git push --tags
 ```
 
