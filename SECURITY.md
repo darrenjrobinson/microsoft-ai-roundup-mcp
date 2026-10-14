@@ -5,6 +5,25 @@
 Open a [security advisory](https://github.com/darrenjrobinson/microsoft-ai-roundup-mcp/security/advisories/new)
 on this repository. Please do not open a public issue for a suspected vulnerability.
 
+## MCP SDK v2 migration — October 2026
+
+The server moved from `@modelcontextprotocol/sdk` 1.30.0 (v1) to `@modelcontextprotocol/server`
+2.3.1 (v2). v1 only receives fixes until at least 2027-01-27, and Dependabot cannot offer v2
+because the package names changed.
+
+- **Smaller runtime surface.** v1 shipped its HTTP transports, OAuth client and `express`/`hono`
+  stack to every consumer, even stdio-only servers. v2's server package does not. A consumer
+  install now contains only `@modelcontextprotocol/server` and `@modelcontextprotocol/core`.
+- **Audit.** `npm audit --omit=dev` went from 6 vulnerabilities (3 moderate, 2 high, 1 critical),
+  all from v1 SDK transitives, to 0. A dev-only `brace-expansion` finding (via `rimraf`) was
+  cleared with `npm audit fix`. Full `npm audit` now reports 0.
+- **Same structure as before.** Still stdio only, one low-level `Server` and no resources.
+  Handlers are now registered by method string (`'tools/list'`, `'tools/call'`) rather than
+  Zod request schemas, and the hand-written JSON Schema tool definitions are unchanged.
+- **Dependabot** now groups `@modelcontextprotocol/*` so the v2 packages always move together.
+
+The September 2026 analysis below covers the v1 SDK and is kept as history.
+
 ## Dependency audit — September 2026
 
 Audited against the three `@modelcontextprotocol/sdk` advisories current at the time.

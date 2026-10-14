@@ -6,8 +6,17 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
+      # MCP SDK v2 packages share one version and server pins core exactly,
+      # so they must always move together. Must precede dev-dependencies:
+      # a package joins the first group it matches.
+      mcp-sdk:
+        patterns: ["@modelcontextprotocol/*"]
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # TypeScript 7 (typescript-go) breaks the build; stay on 5.x for now.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
